@@ -33,32 +33,35 @@
 module ControllerUnit(
     input [5:0] Op,
     input [5:0] Func,
-                            // 0 & 1
-    output reg RegDst,      // Rt & Rd for GR write
+    output reg [1:0] RegDst,      // 00 Rt & 01 Rd & 10 $ra 
     output reg RegWrite,    // no-write & write
-    output reg ALUSrc,      // GR[rt] & SignExt of imm
-    // output reg PCSrc,       // PC+4 & beq
+    output reg [1:0] ALUSrc,      // 00 GR[rt] & 01 SignExt of imm & 10 imm << 16 & 11 0
+    output reg [1:0] PCSrc,       // next PC value signal, def inline
+    output reg PCJumpEnabled,
     output reg MemRead,     // no-read & read from DM
     output reg MemWrite,    // no-write & write into DM
-    output reg MemToReg,    // ALU into GR & DM into GR
-    // output reg [1:0] ALUop, // ALU controller signal  
-    output reg Branch       // is branch
+    output reg [1:0] MemToReg,    // What into Reg?
+    output reg [5:0] ALUOp // ALU controller signal  
+    // output reg Branch,      // is branch
+    // output reg [1:0] regWriteContent    // 00 memoryContent & 01 PC + 4 & 10 ALUResult
     );
 
     always @(*)
     begin
         // RegDst
-        if(Op == 6'b000000 && Func != 6'b001100 && Func != 6'b001000)
-            RegDst <= 1; // R-i
+        // 00 Rt & 01 Rd & 10 $ra 
+        if(Op == 6'b000000 && Func != 6'b001100 && Func != 6'b001000) // not syscall or jr
+            RegDst <= 2'b01; // R-i
         else if(Op == 6'b000000 && Func == 6'b001100)
         begin
-            #4.2;
             $finish; // syscall
         end
-        else if(Op == 6'b100011 || Op == 6'b001101 || Op == 6'b000011)
-            RegDst <= 0; // lw or ori or jal
+        else if(Op == 6'b100011 || Op == 6'b001101 || Op == 6'b001111)
+            RegDst <= 2'b00; // lw or ori or lui
+        else if(Op == 6'b000011) // jal
+            RegDst <= 2'b10;
         else
-            RegDst <= 0; // lui
+            RegDst <= 2'b11;
 
         // RegWrite: lw or ori or jal or lui or R
         if(Op == 6'b000000 || Op == 6'b100011 || Op == 6'b001101 || Op == 6'b000011 || Op == 6'b001111)
@@ -67,17 +70,38 @@ module ControllerUnit(
             RegWrite <= 0;
         
         // ALUSrc
+        // 00 GR[rt] & 01 SignExt of imm & 10 imm << 16 & 11 0
         if(Op == 6'b000000 || Op == 6'b000100)
-            ALUSrc <= 0; // R-i or beq
-        else if(Op == 6'b000011)
-            ALUSrc <= 1; // jal
-        else if(Op == 6'b100011 || Op == 6'b101011)
-            ALUSrc <= 1; // lw or sw
-        else
-            ALUSrc <= 1;
+            ALUSrc <= 2'b00; // R-i or beq
+        else if(Op == 6'b100011 || Op == 6'b101011 || Op == 6'b001101)
+            ALUSrc <= 2'b01; // lw or sw or ori
+        else if(Op == 6'b001111)
+            ALUSrc <= 2'b10;
+        else // if(Op == 6'b000011)
+            ALUSrc <= 2'b11; // jal and others
         
-        // PCSrc
-        // Implemented in Top Level
+        // PCSrc & PCJumpEnabled
+        // 00 regReadA, 01 PC + (immExt << 2) + 4, 10 {PC[31:28],target[25:0],2'b00}
+        if(Op == 6'b000000 && Func == 6'b001000) // jr
+        begin
+            PCJumpEnabled <= 1;
+            PCSrc <= 2'b00;
+        end
+        else if(Op == 6'b000100) // beq
+        begin
+            PCJumpEnabled <= 1; // need to & ALUResult == zero
+            PCSrc <= 2'b01;
+        end
+        else if(Op == 6'b000011) // jal
+        begin
+            PCSrc <= 2'b10;
+            PCJumpEnabled <= 1;
+        end
+        else
+        begin
+            PCSrc <= 2'b11;
+            PCJumpEnabled <= 0;
+        end
 
         // MemRead
         if(Op == 6'b100011)// lw
@@ -91,50 +115,37 @@ module ControllerUnit(
         else
             MemWrite <= 0;
 
-        // MemToReg
+        // MemToReg: What into Regs
+        // 00 ALU, 01 Mem, 10 PC + 4, 11 other(ALU into Regs)
         if(Op == 6'b000000)
-            MemToReg <= 0; // R-i
+            MemToReg <= 2'b00; // R-i
         else if(Op == 6'b100011)
-            MemToReg <= 1; // lw
+            MemToReg <= 2'b01; // lw
+        else if(Op == 6'b000011) // jal
+            MemToReg <= 2'b10;
         else
-            MemToReg <= 0;
+            MemToReg <= 2'b00;
 
         // ALUOp
-        // Inplemented in Top Level
-
-        // Branch: beq or jal or jr
-        if(Op == 6'b000100 || Op == 6'b000011 || (Op == 6'b000000 && Func == 6'b001000))
-            Branch <= 1;
+        if(Op == 6'b000000)
+            ALUOp <= Func;
+        else if(Op == 6'b100011 || Op == 6'b101011) // lw or sw
+            ALUOp <= 6'b100001; // A+B
+        else if(Op == 6'b001101) // ori
+            ALUOp <= 6'b100101; // A|B
+        else if(Op == 6'b000100) // beq
+            ALUOp <= 6'b100011; // A-B
+        else if(Op == 6'b001111) // lui
+            ALUOp <= 6'b100101; // 0|B
         else
-            Branch <= 0;
+            ALUOp <= 6'b100001;
+
+        // // Branch: beq or jal or jr
+        // if(Op == 6'b000100 || Op == 6'b000011 || (Op == 6'b000000 && Func == 6'b001000))
+        //     Branch <= 1;
+        // else
+        //     Branch <= 0;
 
     end
 
 endmodule
-
-// module ALUController (
-//     input [5:0] Op,
-//     input [5:0] Func,
-//     input clock,
-//     output reg [5:0] ALUOp
-//     );
-
-//     always @(posedge clock)
-//     begin
-//         if(Op == 6'b000000)
-//         begin
-//             ALUOp <= Func;
-//         end
-//         else if(Op == 6'b100011 || Op == 6'b101011) // lw or sw
-//             ALUOp <= 6'b100001; // A+B
-//         else if(Op == 6'b001101) // ori
-//             ALUOp <= 6'b100101; // A|B
-//         else if(Op == 6'b000100) // beq
-//             ALUOp <= 6'b100011; // A-B
-//         else if(Op == 6'b001111) // lui
-//             ALUOp <= 6'b100101; // 0|B
-//         else
-//             ALUOp <= 6'b100001;
-//     end
-
-// endmodule

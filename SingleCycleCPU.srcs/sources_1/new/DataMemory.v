@@ -31,7 +31,7 @@ module DataMemory(
     input writeEnabled, 
     input readEnabled,
     input [31:0] writeInput,
-    output reg [31:0] readResult
+    output [31:0] readResult
     );
 
     reg [31:0] data [1023:0];
@@ -46,18 +46,10 @@ module DataMemory(
         end
         else if(writeEnabled)
         begin
-            #4;
             data[address[31:2]] <= writeInput;
         end
-        // else if(readEnabled)
-        //     readResult <= data[address[31:2]];
     end
 
-    always @(posedge clock)
-    begin
-        #1.5; // wait for ALU, before regWriteContent
-        if(readEnabled)
-            readResult <= data[address[31:2]];
-    end
+    assign readResult = readEnabled ? data[address[31:2]] : 32'b0;
 
 endmodule

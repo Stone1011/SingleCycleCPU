@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 2022/11/12 16:37:53
+// Create Date: 2022/11/14 14:44:52
 // Design Name: 
-// Module Name: InstructionMemory
+// Module Name: Mux4
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -19,25 +19,26 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-// READ_ONLY MEMORY for instructions
 
-module InstructionMemory(
-    input [31:0] address,
-    output [31:0] readResult
+module Mux4(
+    input [31:0] A0,
+    input [31:0] A1,
+    input [31:0] A2,
+    input [31:0] A3,
+    input [1:0] choice,
+    output reg [31:0] result
     );
 
-    reg [31:0] data [1023:0];
-
-    initial
+    always @(*)
     begin
-        $readmemh("C:\\CPU\\demo4.txt", data);
+        if(choice == 2'b00)
+            result <= A0;
+        else if(choice == 2'b01)
+            result <= A1;
+        else if(choice == 2'b10)
+            result <= A2;
+        else
+            result <= A3;
     end
-
-    // always @(*)
-    // begin
-    //     readResult = data[address[31:2]];
-    // end
-
-    assign readResult = data[address[11:2]];
 
 endmodule

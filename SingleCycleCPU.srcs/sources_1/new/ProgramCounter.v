@@ -33,11 +33,14 @@ module ProgramCounter(
     
     always @(posedge clock)
     begin
-        #5;
         if(reset)
+        begin
             pc <= 32'h3000;
+        end
         else if(jumpEnabled)
+        begin
             pc <= jumpInput;
+        end
         else
         begin
             pc <= pc + 32'h4;
