@@ -1,0 +1,15 @@
+Vivado Simulator 2019.1
+Time resolution is 1 ps
+Now the instruction Op is: xxxxxx
+Now the instruction Op is: 001111
+Now the instruction Op is: 101011
+Now the instruction Op is: 000000
+Now the instruction Op is: 101011
+Now the instruction Op is: 100011
+Now the instruction Op is: 100011
+Now the instruction Op is: 000000
+Now the instruction Op is: 000100
+Now the instruction Op is: 000100
+Stopped at time : 115800 ps : File "C:/Users/yifan/Documents/VivadoProjects/SingleCycleCPU/SingleCycleCPU.srcs/sources_1/new/CPU.v" Line 168
+Now the instruction Op is: 101011
+$finish called at time : 130200 ps : File "C:/Users/yifan/Documents/VivadoProjects/SingleCycleCPU/SingleCycleCPU.srcs/sources_1/new/ControllerUnit.v" Line 56

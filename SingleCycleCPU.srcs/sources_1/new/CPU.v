@@ -165,7 +165,7 @@ module CPU(
                 if(ALUResult == 0)
                 begin
                     jumpEnabled <= 1;
-                    jumpInput <= PC + (immExt << 2);
+                    jumpInput <= PC + (immExt << 2) + 4;
                 end
                 else
                     jumpEnabled <= 0;
