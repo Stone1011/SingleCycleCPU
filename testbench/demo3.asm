@@ -7,7 +7,7 @@ initial:
     lw $t3, ($zero)
     lw $t4, 4($zero)
     subu $t0, $t4, $t3
-    beq $t0, $t2, .if # a simple if branch
+    beq $t0, $t1, .if # a simple if branch
     beq $zero, $zero, .endif
 .if:
     addu $t4, $t0, $t4
