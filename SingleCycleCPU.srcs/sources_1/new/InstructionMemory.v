@@ -30,7 +30,7 @@ module InstructionMemory(
 
     initial
     begin
-        $readmemh("C:\\CPU\\demo4.txt", data);
+        $readmemh("C:\\CPU\\mips1.txt", data);
     end
 
     // always @(*)

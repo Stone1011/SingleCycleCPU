@@ -51,11 +51,6 @@ module CPU(
     assign rd = instruction[15:11];
     assign imm = instruction[15:0];
     assign target = instruction[25:0];
-
-    always @(posedge clock)
-    begin
-        $display("Now the instruction Op is: %b", Op);
-    end
     
     wire readDM, writeDM; // signal whether should read & write
     wire [31:0] memoryContent; // read content from DM
@@ -67,6 +62,15 @@ module CPU(
     wire [31:0] jumpInput;
     wire [31:0] PC;
     wire [31:0] immExt;
+
+    always @(negedge clock)
+    begin
+        if(Op == 6'b000000 && Func == 6'b001100)
+        begin
+            $finish; // syscall
+        end
+//        $display("Current PC: %x", PC);
+    end
 
     // CU module
     wire [1:0] RegDst, ALUSrc, MemToReg, PCSrc;
@@ -136,7 +140,7 @@ module CPU(
     ProgramCounter PCModule(
         .reset(reset), 
         .clock(clock),
-        .jumpEnabled(PCJumpEnabled && (ALUSrc != 2'b01 || ALUResult == 0)), 
+        .jumpEnabled(PCJumpEnabled && (Op != 6'b000100 || ALUResult == 0)), 
         .jumpInput(jumpInput), 
         .pcValue(PC));
     // PCJumpInput Mux
@@ -153,19 +157,7 @@ module CPU(
         .address(PC), 
         .readResult(instruction));
 
-
-
-    // always @(posedge clock)
-    // begin
-    //     // Simulate: write regs next cycle
-    //     // Update the signal after 1ns
-    //     #1;
-    //     regWriteEnabledReg <= regWriteEnabled;
-    // end
-
     // DM module
-    
-
     DataMemory DM(
         .reset(reset), 
         .clock(clock), 
@@ -185,97 +177,5 @@ module CPU(
     assign targetExt[27:2] = target;
     assign targetExt[31:28] = target[25] ? 4'b1111 : 4'b0000;
     assign targetExt[1:0] = 2'b00;
-
-    // write back Reg's code
-    // always @(posedge clock)
-    // begin
-    //     #1;
-    //     if(RegDst == 0 && Op == 6'b000011) // jal
-    //         regWrite <= 5'b11111; // $ra
-    //     else if(RegDst == 0) // lw or ori or lui
-    //         regWrite <= rt;
-    //     else// if(RegDst == 1)
-    //         regWrite <= rd;
-    // end
-
-    // write back Reg's data
-    // always @(posedge clock)
-    // begin
-    //     #2;
-    //     if(MemToReg == 1 && Op != 6'b000011) // DM into GR
-    //         regWriteContent <= memoryContent;
-    //     else if(Op == 6'b000011 && MemToReg == 1)
-    //         regWriteContent <= PC + 4; // jal
-    //     else // ALU into GR
-    //         regWriteContent <= ALUResult;
-    // end
-
-    // ALU's second input
-    // always @(posedge clock)
-    // begin
-    //     if(ALUSrc == 0)
-    //         dataB <= regReadB;
-    //     // else if(Op == 6'b000011)
-    //     //     dataB <= targetExt; // jal, actually not meaningful
-    //     else if(Op == 6'b100011 || Op == 6'b101011 || Op == 6'b001101)// lw or sw or ori
-    //         dataB <= immExt;
-    //     else if(Op == 6'b001111) // lui
-    //         dataB <= (imm << 16);
-    //     else
-    //         dataB <= 0;
-    // end
-
-    // PC value
-    // always @(posedge clock)
-    // begin
-    //     #4.8;
-    //     if(Branch)
-    //     begin
-    //         if(Op == 6'b000000) // jr
-    //         begin
-    //             jumpEnabled <= 1;
-    //             jumpInput <= regReadA; // PC := rs
-    //         end
-    //         if(Op == 6'b000100) // beq
-    //         begin
-    //             if(ALUResult == 0)
-    //             begin
-    //                 jumpEnabled <= 1;
-    //                 jumpInput <= PC + (immExt << 2) + 4;
-    //             end
-    //             else
-    //                 jumpEnabled <= 0;
-    //         end
-    //         else // jal
-    //         begin
-    //             jumpEnabled <= 1;
-    //             jumpInput[31:28] <= PC[31:28];
-    //             jumpInput[27:2] <= target[25:0];
-    //             jumpInput[1:0] <= 2'b00;
-    //         end
-    //     end
-    //     else
-    //         jumpEnabled <= 0;
-    // end
-
-    // ALU function code: ALUOp
-    // ALUController ALUC(.Op(Op), .Func(Func), .clock(clock), .ALUOp(ALUOp));
-    // always @(posedge clock)
-    // begin
-    //     if(Op == 6'b000000)
-    //     begin
-    //         ALUOp <= Func;
-    //     end
-    //     else if(Op == 6'b100011 || Op == 6'b101011) // lw or sw
-    //         ALUOp <= 6'b100001; // A+B
-    //     else if(Op == 6'b001101) // ori
-    //         ALUOp <= 6'b100101; // A|B
-    //     else if(Op == 6'b000100) // beq
-    //         ALUOp <= 6'b100011; // A-B
-    //     else if(Op == 6'b001111) // lui
-    //         ALUOp <= 6'b100101; // 0|B
-    //     else
-    //         ALUOp <= 6'b100001;
-    // end
 
 endmodule

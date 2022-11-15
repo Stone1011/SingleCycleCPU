@@ -53,7 +53,7 @@ module GeneralPurposeRegisters(
                 GR[i] <= 0;
             end
         end
-        else if(writeEnabled)
+        else if(writeEnabled && writeNo != 0) // cannot write $zero
         begin
             GR[writeNo] <= writeContent;
         end

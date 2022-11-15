@@ -41,7 +41,7 @@ initial begin
     // $stop; // Comment this line if you don't need per-cycle debugging
 
     #1;
-    for (k = 0; k < 5000; k = k + 1) begin // 5000 clocks
+    for (k = 0; ; k = k + 1) begin // 5000 clocks
         clock = 1; #5;
         clock = 0; #5;
     end

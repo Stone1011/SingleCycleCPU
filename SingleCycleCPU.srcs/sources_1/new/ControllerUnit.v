@@ -52,10 +52,6 @@ module ControllerUnit(
         // 00 Rt & 01 Rd & 10 $ra 
         if(Op == 6'b000000 && Func != 6'b001100 && Func != 6'b001000) // not syscall or jr
             RegDst <= 2'b01; // R-i
-        else if(Op == 6'b000000 && Func == 6'b001100)
-        begin
-            $finish; // syscall
-        end
         else if(Op == 6'b100011 || Op == 6'b001101 || Op == 6'b001111)
             RegDst <= 2'b00; // lw or ori or lui
         else if(Op == 6'b000011) // jal
@@ -76,7 +72,7 @@ module ControllerUnit(
         else if(Op == 6'b100011 || Op == 6'b101011 || Op == 6'b001101)
             ALUSrc <= 2'b01; // lw or sw or ori
         else if(Op == 6'b001111)
-            ALUSrc <= 2'b10;
+            ALUSrc <= 2'b10; // lui
         else // if(Op == 6'b000011)
             ALUSrc <= 2'b11; // jal and others
         
