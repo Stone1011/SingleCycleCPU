@@ -166,7 +166,7 @@ module CPU(
         .readEnabled(readDM), 
         .writeInput(regReadB), 
         .readResult(memoryContent));
-
+        
     // imm sign extend
     SignExtendUnit SEU(
         .in(imm), 
