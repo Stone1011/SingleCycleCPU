@@ -34,14 +34,14 @@ module DataMemory(
     output [31:0] readResult
     );
 
-    reg [31:0] data [1023:0];
+    reg [31:0] data [0:2047];
     integer i;
 
     always @(posedge clock)
     begin
         if(reset)
         begin
-            for(i = 0; i < 1024; i = i + 1)
+            for(i = 0; i < 2048; i = i + 1)
                 data[i] <= 32'b0;
         end
         else if(writeEnabled)
